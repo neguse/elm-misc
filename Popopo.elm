@@ -3,12 +3,13 @@ module Popopo exposing (..)
 import Color exposing (Color)
 import Html exposing (Html, text, br)
 import Html.App as Html
-import Html.Attributes exposing (style)
-import Html.Events exposing (onMouseDown)
+import Html.Attributes exposing (style, selected, value)
+import Html.Events exposing (on, onMouseDown)
 import String
 import Time exposing (Time, millisecond, inSeconds)
 import List
 import Keyboard exposing (KeyCode, downs)
+import Json.Decode as Json
 
 
 main =
@@ -25,12 +26,12 @@ main =
 
 
 type alias Model =
-    { charIndex : Int, lineIndex : Int, now : Time }
+    { charIndex : Int, lineIndex : Int, now : Time, fontSize : String }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { charIndex = 0, lineIndex = 0, now = 0 }, Cmd.none )
+    ( { charIndex = 0, lineIndex = 0, now = 0, fontSize = "medium" }, Cmd.none )
 
 
 
@@ -41,6 +42,7 @@ type Msg
     = Tick Time
     | KeyDown KeyCode
     | Click
+    | ChangeFontSize String
 
 
 currentMessageLength : Model -> Int
@@ -118,6 +120,9 @@ update msg model =
                 ( (nextLine model), Cmd.none )
             else
                 ( model, Cmd.none )
+
+        ChangeFontSize newFontSize ->
+            ( { model | fontSize = newFontSize }, Cmd.none )
 
 
 
@@ -203,6 +208,31 @@ viewMessages model =
         )
 
 
+fontSizes =
+    [ "xx-small"
+    , "x-small"
+    , "small"
+    , "medium"
+    , "large"
+    , "x-large"
+    , "xx-large"
+    ]
+
+
+toOption : String -> String -> Html msg
+toOption n v =
+    Html.option [ value v, selected (v == n) ] [ text v ]
+
+
+
+-- https://github.com/elm-lang/html/issues/23
+
+
+onChange : (String -> msg) -> Html.Attribute msg
+onChange handler =
+    on "change" <| Json.map handler <| Json.at [ "target", "value" ] Json.string
+
+
 view : Model -> Html Msg
 view model =
     Html.div
@@ -211,6 +241,7 @@ view model =
             [ ( "position", "fixed" )
             , ( "width", "100%" )
             , ( "height", "100%" )
+            , ( "font-size", (.fontSize model) )
             ]
         ]
         [ (Html.div
@@ -219,6 +250,12 @@ view model =
                 , ( "bottom", "0px" )
                 ]
             ]
-            (viewMessages model)
+            (List.append (viewMessages model)
+                [ (Html.select
+                    [ onChange ChangeFontSize ]
+                    (List.map (\x -> toOption (.fontSize model) x) fontSizes)
+                  )
+                ]
+            )
           )
         ]
