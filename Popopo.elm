@@ -181,22 +181,24 @@ viewNextLine model =
         ""
 
 
+textDiv txt =
+    Html.div [] [ text txt ]
+
+
 viewMessages : Model -> List (Html msg)
 viewMessages model =
     let
         repMessages =
             (messages ((.lineIndex model) + 1))
     in
-        (List.intersperse (br [] [])
-            (List.append
-                (List.map text (List.take (.lineIndex model) repMessages))
-                (case (List.head (List.drop (.lineIndex model) repMessages)) of
-                    Just a ->
-                        [ text (String.left (.charIndex model) a ++ (viewNextLine model)) ]
+        (List.append
+            (List.map textDiv (List.take (.lineIndex model) repMessages))
+            (case (List.head (List.drop (.lineIndex model) repMessages)) of
+                Just a ->
+                    [ textDiv (String.left (.charIndex model) a ++ (viewNextLine model)) ]
 
-                    Nothing ->
-                        []
-                )
+                Nothing ->
+                    []
             )
         )
 
