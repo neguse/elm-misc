@@ -8,6 +8,7 @@ import Html.Events exposing (onMouseDown)
 import String
 import Time exposing (Time, millisecond, inSeconds)
 import List
+import Keyboard exposing (KeyCode, downs)
 
 
 main =
@@ -38,6 +39,7 @@ init =
 
 type Msg
     = Tick Time
+    | KeyDown KeyCode
     | Click
 
 
@@ -107,6 +109,16 @@ update msg model =
             else
                 ( model, Cmd.none )
 
+        KeyDown code ->
+            if code /= 32 && code /= 13 then
+                ( model, Cmd.none )
+            else if hasNextChar model then
+                ( (endChar model), Cmd.none )
+            else if hasNextLine model then
+                ( (nextLine model), Cmd.none )
+            else
+                ( model, Cmd.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -114,7 +126,10 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every (millisecond * 100) Tick
+    Sub.batch
+        [ Time.every (millisecond * 100) Tick
+        , Keyboard.downs KeyDown
+        ]
 
 
 
