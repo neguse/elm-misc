@@ -8827,6 +8827,16 @@ var _elm_lang$keyboard$Keyboard$subMap = F2(
 			});
 	});
 _elm_lang$core$Native_Platform.effectManagers['Keyboard'] = {pkg: 'elm-lang/keyboard', init: _elm_lang$keyboard$Keyboard$init, onEffects: _elm_lang$keyboard$Keyboard$onEffects, onSelfMsg: _elm_lang$keyboard$Keyboard$onSelfMsg, tag: 'sub', subMap: _elm_lang$keyboard$Keyboard$subMap};
+var _user$project$Popopo$textDiv = function (txt) {
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html$text(txt)
+			]));
+};
 var _user$project$Popopo$origMessages = _elm_lang$core$Native_List.fromArray(
 	['寿限無　寿限無', '五劫の擦り切れ', '海砂利水魚の', '水行末 雲来末 風来末', '食う寝る処に住む処', '藪ら柑子の藪柑子', 'パイポ　パイポ', 'パイポのシューリンガン', 'シューリンガンのグーリンダイ', 'グーリンダイのポンポコピーのポンポコナーの', '長久命の長助']);
 var _user$project$Popopo$messages = function (len) {
@@ -8963,51 +8973,43 @@ var _user$project$Popopo$viewMessages = function (model) {
 			return _.lineIndex;
 		}(model) + 1);
 	return A2(
-		_elm_lang$core$List$intersperse,
+		_elm_lang$core$List$append,
 		A2(
-			_elm_lang$html$Html$br,
-			_elm_lang$core$Native_List.fromArray(
-				[]),
-			_elm_lang$core$Native_List.fromArray(
-				[])),
-		A2(
-			_elm_lang$core$List$append,
+			_elm_lang$core$List$map,
+			_user$project$Popopo$textDiv,
 			A2(
-				_elm_lang$core$List$map,
-				_elm_lang$html$Html$text,
+				_elm_lang$core$List$take,
+				function (_) {
+					return _.lineIndex;
+				}(model),
+				repMessages)),
+		function () {
+			var _p3 = _elm_lang$core$List$head(
 				A2(
-					_elm_lang$core$List$take,
+					_elm_lang$core$List$drop,
 					function (_) {
 						return _.lineIndex;
 					}(model),
-					repMessages)),
-			function () {
-				var _p3 = _elm_lang$core$List$head(
-					A2(
-						_elm_lang$core$List$drop,
-						function (_) {
-							return _.lineIndex;
-						}(model),
-						repMessages));
-				if (_p3.ctor === 'Just') {
-					return _elm_lang$core$Native_List.fromArray(
-						[
-							_elm_lang$html$Html$text(
+					repMessages));
+			if (_p3.ctor === 'Just') {
+				return _elm_lang$core$Native_List.fromArray(
+					[
+						_user$project$Popopo$textDiv(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
 							A2(
-								_elm_lang$core$Basics_ops['++'],
-								A2(
-									_elm_lang$core$String$left,
-									function (_) {
-										return _.charIndex;
-									}(model),
-									_p3._0),
-								_user$project$Popopo$viewNextLine(model)))
-						]);
-				} else {
-					return _elm_lang$core$Native_List.fromArray(
-						[]);
-				}
-			}()));
+								_elm_lang$core$String$left,
+								function (_) {
+									return _.charIndex;
+								}(model),
+								_p3._0),
+							_user$project$Popopo$viewNextLine(model)))
+					]);
+			} else {
+				return _elm_lang$core$Native_List.fromArray(
+					[]);
+			}
+		}());
 };
 var _user$project$Popopo$init = {
 	ctor: '_Tuple2',
