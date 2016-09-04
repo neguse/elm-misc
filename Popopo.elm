@@ -170,7 +170,8 @@ view model =
     Html.div
         [ onMouseDown Click
         , style
-            [ ( "width", "100%" )
+            [ ( "position", "fixed" )
+            , ( "width", "100%" )
             , ( "height", "100%" )
             ]
         ]
