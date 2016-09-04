@@ -175,4 +175,12 @@ view model =
             , ( "height", "100%" )
             ]
         ]
-        (viewMessages model)
+        [ (Html.div
+            [ style
+                [ ( "position", "fixed" )
+                , ( "bottom", "0px" )
+                ]
+            ]
+            (viewMessages model)
+          )
+        ]
