@@ -8827,6 +8827,36 @@ var _elm_lang$keyboard$Keyboard$subMap = F2(
 			});
 	});
 _elm_lang$core$Native_Platform.effectManagers['Keyboard'] = {pkg: 'elm-lang/keyboard', init: _elm_lang$keyboard$Keyboard$init, onEffects: _elm_lang$keyboard$Keyboard$onEffects, onSelfMsg: _elm_lang$keyboard$Keyboard$onSelfMsg, tag: 'sub', subMap: _elm_lang$keyboard$Keyboard$subMap};
+var _user$project$Popopo$onChange = function (handler) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'change',
+		A2(
+			_elm_lang$core$Json_Decode$map,
+			handler,
+			A2(
+				_elm_lang$core$Json_Decode$at,
+				_elm_lang$core$Native_List.fromArray(
+					['target', 'value']),
+				_elm_lang$core$Json_Decode$string)));
+};
+var _user$project$Popopo$toOption = F2(
+	function (n, v) {
+		return A2(
+			_elm_lang$html$Html$option,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$value(v),
+					_elm_lang$html$Html_Attributes$selected(
+					_elm_lang$core$Native_Utils.eq(v, n))
+				]),
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html$text(v)
+				]));
+	});
+var _user$project$Popopo$fontSizes = _elm_lang$core$Native_List.fromArray(
+	['xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large']);
 var _user$project$Popopo$textDiv = function (txt) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -8941,7 +8971,7 @@ var _user$project$Popopo$update = F2(
 					_0: _user$project$Popopo$nextLine(model),
 					_1: _elm_lang$core$Platform_Cmd$none
 				} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none});
-			default:
+			case 'KeyDown':
 				var _p2 = _p1._0;
 				return ((!_elm_lang$core$Native_Utils.eq(_p2, 32)) && (!_elm_lang$core$Native_Utils.eq(_p2, 13))) ? {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none} : (_user$project$Popopo$hasNextChar(model) ? {
 					ctor: '_Tuple2',
@@ -8952,6 +8982,14 @@ var _user$project$Popopo$update = F2(
 					_0: _user$project$Popopo$nextLine(model),
 					_1: _elm_lang$core$Platform_Cmd$none
 				} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none}));
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{fontSize: _p1._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 		}
 	});
 var _user$project$Popopo$viewNextLine = function (model) {
@@ -9013,13 +9051,16 @@ var _user$project$Popopo$viewMessages = function (model) {
 };
 var _user$project$Popopo$init = {
 	ctor: '_Tuple2',
-	_0: {charIndex: 0, lineIndex: 0, now: 0},
+	_0: {charIndex: 0, lineIndex: 0, now: 0, fontSize: 'medium'},
 	_1: _elm_lang$core$Platform_Cmd$none
 };
-var _user$project$Popopo$Model = F3(
-	function (a, b, c) {
-		return {charIndex: a, lineIndex: b, now: c};
+var _user$project$Popopo$Model = F4(
+	function (a, b, c, d) {
+		return {charIndex: a, lineIndex: b, now: c, fontSize: d};
 	});
+var _user$project$Popopo$ChangeFontSize = function (a) {
+	return {ctor: 'ChangeFontSize', _0: a};
+};
 var _user$project$Popopo$Click = {ctor: 'Click'};
 var _user$project$Popopo$view = function (model) {
 	return A2(
@@ -9032,7 +9073,14 @@ var _user$project$Popopo$view = function (model) {
 					[
 						{ctor: '_Tuple2', _0: 'position', _1: 'fixed'},
 						{ctor: '_Tuple2', _0: 'width', _1: '100%'},
-						{ctor: '_Tuple2', _0: 'height', _1: '100%'}
+						{ctor: '_Tuple2', _0: 'height', _1: '100%'},
+						{
+						ctor: '_Tuple2',
+						_0: 'font-size',
+						_1: function (_) {
+							return _.fontSize;
+						}(model)
+					}
 					]))
 			]),
 		_elm_lang$core$Native_List.fromArray(
@@ -9048,7 +9096,29 @@ var _user$project$Popopo$view = function (model) {
 								{ctor: '_Tuple2', _0: 'bottom', _1: '0px'}
 							]))
 					]),
-				_user$project$Popopo$viewMessages(model))
+				A2(
+					_elm_lang$core$List$append,
+					_user$project$Popopo$viewMessages(model),
+					_elm_lang$core$Native_List.fromArray(
+						[
+							A2(
+							_elm_lang$html$Html$select,
+							_elm_lang$core$Native_List.fromArray(
+								[
+									_user$project$Popopo$onChange(_user$project$Popopo$ChangeFontSize)
+								]),
+							A2(
+								_elm_lang$core$List$map,
+								function (x) {
+									return A2(
+										_user$project$Popopo$toOption,
+										function (_) {
+											return _.fontSize;
+										}(model),
+										x);
+								},
+								_user$project$Popopo$fontSizes))
+						])))
 			]));
 };
 var _user$project$Popopo$KeyDown = function (a) {
