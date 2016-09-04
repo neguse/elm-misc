@@ -41,39 +41,34 @@ type Msg
     | Click
 
 
-currentCharLength : Model -> Int
-currentCharLength model =
-    case (List.head (List.drop (.lineIndex model) messages)) of
-        Just a ->
-            String.length a
-
-        Nothing ->
-            0
+currentMessageLength : Model -> Int
+currentMessageLength model =
+    messageLength (.lineIndex model)
 
 
 nextCharIndex : Model -> Int
 nextCharIndex model =
-    min (currentCharLength model) ((.charIndex model) + 1)
+    min (currentMessageLength model) ((.charIndex model) + 1)
 
 
 endCharIndex : Model -> Int
 endCharIndex model =
-    (currentCharLength model)
+    (currentMessageLength model)
 
 
 hasNextChar : Model -> Bool
 hasNextChar model =
-    (currentCharLength model) > (.charIndex model)
+    (currentMessageLength model) > (.charIndex model)
 
 
 nextLineIndex : Model -> Int
 nextLineIndex model =
-    min ((List.length messages) - 1) ((.lineIndex model) + 1)
+    (.lineIndex model) + 1
 
 
 hasNextLine : Model -> Bool
 hasNextLine model =
-    ((List.length messages) - 1) > (.lineIndex model)
+    True
 
 
 nextChar : Model -> Model
@@ -126,7 +121,7 @@ subscriptions model =
 -- VIEW
 
 
-messages =
+origMessages =
     [ "寿限無\x3000寿限無"
     , "五劫の擦り切れ"
     , "海砂利水魚の"
@@ -141,6 +136,28 @@ messages =
     ]
 
 
+messages : Int -> List String
+messages len =
+    if (List.length origMessages) > len then
+        List.take len origMessages
+    else
+        List.append origMessages (messages (len - (List.length origMessages)))
+
+
+messageLength : Int -> Int
+messageLength index =
+    let
+        message =
+            List.head (List.drop (index % (List.length origMessages)) origMessages)
+    in
+        case message of
+            Just x ->
+                String.length x
+
+            Nothing ->
+                0
+
+
 viewNextLine : Model -> String
 viewNextLine model =
     if (not (hasNextChar model)) && (hasNextLine model) && ((round (inSeconds (.now model))) % 2 == 0) then
@@ -151,18 +168,22 @@ viewNextLine model =
 
 viewMessages : Model -> List (Html msg)
 viewMessages model =
-    (List.intersperse (br [] [])
-        (List.append
-            (List.map text (List.take (.lineIndex model) messages))
-            (case (List.head (List.drop (.lineIndex model) messages)) of
-                Just a ->
-                    [ text (String.left (.charIndex model) a ++ (viewNextLine model)) ]
+    let
+        repMessages =
+            (messages ((.lineIndex model) + 1))
+    in
+        (List.intersperse (br [] [])
+            (List.append
+                (List.map text (List.take (.lineIndex model) repMessages))
+                (case (List.head (List.drop (.lineIndex model) repMessages)) of
+                    Just a ->
+                        [ text (String.left (.charIndex model) a ++ (viewNextLine model)) ]
 
-                Nothing ->
-                    []
+                    Nothing ->
+                        []
+                )
             )
         )
-    )
 
 
 view : Model -> Html Msg
