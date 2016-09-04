@@ -8479,22 +8479,40 @@ var _elm_lang$html$Html_Events$Options = F2(
 	function (a, b) {
 		return {stopPropagation: a, preventDefault: b};
 	});
-var _user$project$Popopo$messages = _elm_lang$core$Native_List.fromArray(
+var _user$project$Popopo$origMessages = _elm_lang$core$Native_List.fromArray(
 	['寿限無　寿限無', '五劫の擦り切れ', '海砂利水魚の', '水行末 雲来末 風来末', '食う寝る処に住む処', '藪ら柑子の藪柑子', 'パイポ　パイポ', 'パイポのシューリンガン', 'シューリンガンのグーリンダイ', 'グーリンダイのポンポコピーのポンポコナーの', '長久命の長助']);
+var _user$project$Popopo$messages = function (len) {
+	return (_elm_lang$core$Native_Utils.cmp(
+		_elm_lang$core$List$length(_user$project$Popopo$origMessages),
+		len) > 0) ? A2(_elm_lang$core$List$take, len, _user$project$Popopo$origMessages) : A2(
+		_elm_lang$core$List$append,
+		_user$project$Popopo$origMessages,
+		_user$project$Popopo$messages(
+			len - _elm_lang$core$List$length(_user$project$Popopo$origMessages)));
+};
+var _user$project$Popopo$messageLength = function (index) {
+	var message = _elm_lang$core$List$head(
+		A2(
+			_elm_lang$core$List$drop,
+			A2(
+				_elm_lang$core$Basics_ops['%'],
+				index,
+				_elm_lang$core$List$length(_user$project$Popopo$origMessages)),
+			_user$project$Popopo$origMessages));
+	var _p0 = message;
+	if (_p0.ctor === 'Just') {
+		return _elm_lang$core$String$length(_p0._0);
+	} else {
+		return 0;
+	}
+};
 var _user$project$Popopo$hasNextLine = function (model) {
-	return _elm_lang$core$Native_Utils.cmp(
-		_elm_lang$core$List$length(_user$project$Popopo$messages) - 1,
-		function (_) {
-			return _.lineIndex;
-		}(model)) > 0;
+	return true;
 };
 var _user$project$Popopo$nextLineIndex = function (model) {
-	return A2(
-		_elm_lang$core$Basics$min,
-		_elm_lang$core$List$length(_user$project$Popopo$messages) - 1,
-		function (_) {
-			return _.lineIndex;
-		}(model) + 1);
+	return function (_) {
+		return _.lineIndex;
+	}(model) + 1;
 };
 var _user$project$Popopo$nextLine = function (model) {
 	return _elm_lang$core$Native_Utils.update(
@@ -8504,24 +8522,16 @@ var _user$project$Popopo$nextLine = function (model) {
 			lineIndex: _user$project$Popopo$nextLineIndex(model)
 		});
 };
-var _user$project$Popopo$currentCharLength = function (model) {
-	var _p0 = _elm_lang$core$List$head(
-		A2(
-			_elm_lang$core$List$drop,
-			function (_) {
-				return _.lineIndex;
-			}(model),
-			_user$project$Popopo$messages));
-	if (_p0.ctor === 'Just') {
-		return _elm_lang$core$String$length(_p0._0);
-	} else {
-		return 0;
-	}
+var _user$project$Popopo$currentMessageLength = function (model) {
+	return _user$project$Popopo$messageLength(
+		function (_) {
+			return _.lineIndex;
+		}(model));
 };
 var _user$project$Popopo$nextCharIndex = function (model) {
 	return A2(
 		_elm_lang$core$Basics$min,
-		_user$project$Popopo$currentCharLength(model),
+		_user$project$Popopo$currentMessageLength(model),
 		function (_) {
 			return _.charIndex;
 		}(model) + 1);
@@ -8534,7 +8544,7 @@ var _user$project$Popopo$nextChar = function (model) {
 		});
 };
 var _user$project$Popopo$endCharIndex = function (model) {
-	return _user$project$Popopo$currentCharLength(model);
+	return _user$project$Popopo$currentMessageLength(model);
 };
 var _user$project$Popopo$endChar = function (model) {
 	return _elm_lang$core$Native_Utils.update(
@@ -8545,7 +8555,7 @@ var _user$project$Popopo$endChar = function (model) {
 };
 var _user$project$Popopo$hasNextChar = function (model) {
 	return _elm_lang$core$Native_Utils.cmp(
-		_user$project$Popopo$currentCharLength(model),
+		_user$project$Popopo$currentMessageLength(model),
 		function (_) {
 			return _.charIndex;
 		}(model)) > 0;
@@ -8588,6 +8598,10 @@ var _user$project$Popopo$viewNextLine = function (model) {
 		0))) ? '▼' : '';
 };
 var _user$project$Popopo$viewMessages = function (model) {
+	var repMessages = _user$project$Popopo$messages(
+		function (_) {
+			return _.lineIndex;
+		}(model) + 1);
 	return A2(
 		_elm_lang$core$List$intersperse,
 		A2(
@@ -8606,7 +8620,7 @@ var _user$project$Popopo$viewMessages = function (model) {
 					function (_) {
 						return _.lineIndex;
 					}(model),
-					_user$project$Popopo$messages)),
+					repMessages)),
 			function () {
 				var _p2 = _elm_lang$core$List$head(
 					A2(
@@ -8614,7 +8628,7 @@ var _user$project$Popopo$viewMessages = function (model) {
 						function (_) {
 							return _.lineIndex;
 						}(model),
-						_user$project$Popopo$messages));
+						repMessages));
 				if (_p2.ctor === 'Just') {
 					return _elm_lang$core$Native_List.fromArray(
 						[
@@ -8659,7 +8673,21 @@ var _user$project$Popopo$view = function (model) {
 						{ctor: '_Tuple2', _0: 'height', _1: '100%'}
 					]))
 			]),
-		_user$project$Popopo$viewMessages(model));
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$style(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								{ctor: '_Tuple2', _0: 'position', _1: 'fixed'},
+								{ctor: '_Tuple2', _0: 'bottom', _1: '0px'}
+							]))
+					]),
+				_user$project$Popopo$viewMessages(model))
+			]));
 };
 var _user$project$Popopo$Tick = function (a) {
 	return {ctor: 'Tick', _0: a};
