@@ -236,8 +236,7 @@ onChange handler =
 view : Model -> Html Msg
 view model =
     Html.div
-        [ onMouseDown Click
-        , style
+        [ style
             [ ( "position", "fixed" )
             , ( "width", "100%" )
             , ( "height", "100%" )
@@ -247,15 +246,22 @@ view model =
         [ (Html.div
             [ style
                 [ ( "position", "fixed" )
+                , ( "bottom", "2em" )
+                ]
+            , onMouseDown Click
+            ]
+            (viewMessages model)
+          )
+        , (Html.div
+            [ style
+                [ ( "position", "fixed" )
                 , ( "bottom", "0px" )
                 ]
             ]
-            (List.append (viewMessages model)
-                [ (Html.select
-                    [ onChange ChangeFontSize ]
-                    (List.map (\x -> toOption (.fontSize model) x) fontSizes)
-                  )
-                ]
-            )
+            [ (Html.select
+                [ onChange ChangeFontSize ]
+                (List.map (\x -> toOption (.fontSize model) x) fontSizes)
+              )
+            ]
           )
         ]
