@@ -247,6 +247,7 @@ view model =
             [ style
                 [ ( "position", "fixed" )
                 , ( "bottom", "2em" )
+                , ( "width", "100%" )
                 ]
             , onMouseDown Click
             ]
