@@ -2,7 +2,6 @@ module Popopo exposing (..)
 
 import Color exposing (Color)
 import Html exposing (Html, text, br)
-import Html.App as Html
 import Html.Attributes exposing (style, selected, value)
 import Html.Events exposing (on, onMouseDown)
 import String
