@@ -2,7 +2,6 @@ module Main exposing (..)
 
 import Color exposing (Color)
 import Html exposing (Html)
-import Html.App as Html
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Time exposing (Time, millisecond, inSeconds)
@@ -73,7 +72,7 @@ lines t =
                 ( (barLength i t), (barAngle i t) )
                 (barColor i t)
         )
-        [0..barNum]
+        (List.range 0 barNum)
 
 
 barNum : Int
