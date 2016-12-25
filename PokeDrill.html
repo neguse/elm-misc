@@ -9017,6 +9017,42 @@ var _elm_lang$html$Html_Events$Options = F2(
 var _user$project$PokeDrill$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$none;
 };
+var _user$project$PokeDrill$viewCorrectRate = function (log) {
+	if (_elm_lang$core$List$isEmpty(log)) {
+		return _elm_lang$html$Html$text('');
+	} else {
+		var correct = _elm_lang$core$List$length(
+			A2(
+				_elm_lang$core$List$filter,
+				function (l) {
+					return l.correct;
+				},
+				log));
+		var total = _elm_lang$core$List$length(log);
+		return _elm_lang$html$Html$text(
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				'正答率 ',
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					_elm_lang$core$Basics$toString(correct),
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						' / ',
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							_elm_lang$core$Basics$toString(total),
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								' = ',
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									_elm_lang$core$Basics$toString(
+										_elm_lang$core$Basics$floor(
+											(100.0 * _elm_lang$core$Basics$toFloat(correct)) / _elm_lang$core$Basics$toFloat(total))),
+									' %')))))));
+	}
+};
 var _user$project$PokeDrill$rowStyle = {
 	ctor: '::',
 	_0: _elm_lang$html$Html_Attributes$style(
@@ -10024,41 +10060,66 @@ var _user$project$PokeDrill$update = F2(
 	});
 var _user$project$PokeDrill$Start = {ctor: 'Start'};
 var _user$project$PokeDrill$view = function (model) {
-	var _p8 = model;
-	if (_p8.ctor === 'Init') {
-		return A2(
-			_elm_lang$html$Html$div,
-			{ctor: '[]'},
-			{
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$button,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onClick(_user$project$PokeDrill$Start),
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text('スタート'),
-						_1: {ctor: '[]'}
-					}),
-				_1: {ctor: '[]'}
-			});
-	} else {
-		return A2(
-			_elm_lang$html$Html$div,
-			{ctor: '[]'},
-			{
-				ctor: '::',
-				_0: _user$project$PokeDrill$viewAnswer,
-				_1: {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$h1,
+				{ctor: '[]'},
+				{
 					ctor: '::',
-					_0: _user$project$PokeDrill$viewQuesting(_p8._0),
+					_0: _elm_lang$html$Html$text('ポケドリル(仮)'),
 					_1: {ctor: '[]'}
-				}
-			});
-	}
+				}),
+			_1: {
+				ctor: '::',
+				_0: function () {
+					var _p8 = model;
+					if (_p8.ctor === 'Init') {
+						return A2(
+							_elm_lang$html$Html$div,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$button,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Events$onClick(_user$project$PokeDrill$Start),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text('スタート'),
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							});
+					} else {
+						var _p9 = _p8._0;
+						return A2(
+							_elm_lang$html$Html$div,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: _user$project$PokeDrill$viewCorrectRate(_p9.logQuestion),
+								_1: {
+									ctor: '::',
+									_0: _user$project$PokeDrill$viewAnswer,
+									_1: {
+										ctor: '::',
+										_0: _user$project$PokeDrill$viewQuesting(_p9),
+										_1: {ctor: '[]'}
+									}
+								}
+							});
+					}
+				}(),
+				_1: {ctor: '[]'}
+			}
+		});
 };
 var _user$project$PokeDrill$main = _elm_lang$html$Html$program(
 	{init: _user$project$PokeDrill$init, view: _user$project$PokeDrill$view, update: _user$project$PokeDrill$update, subscriptions: _user$project$PokeDrill$subscriptions})();
