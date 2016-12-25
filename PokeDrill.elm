@@ -386,7 +386,8 @@ viewQuesting q =
             , (th headerStyle [ text "せいかい？" ])
             ]
          )
-            :: (List.append (viewLogQuestion q.logQuestion) [ viewQuestion q.question ])
+            :: (viewQuestion q.question)
+            :: (viewLogQuestion q.logQuestion)
         )
 
 
@@ -438,13 +439,13 @@ view model =
     case model of
         Init ->
             div []
-                [ button [ onClick Start ] [ text "Start" ]
+                [ button [ onClick Start ] [ text "スタート" ]
                 ]
 
         Questing q ->
             div []
-                [ (viewQuesting q)
-                , (viewAnswer)
+                [ (viewAnswer)
+                , (viewQuesting q)
                 ]
 
 
@@ -454,7 +455,7 @@ view model =
 
 appendLog : List LogQuestion -> Question -> Bool -> List LogQuestion
 appendLog log q correct =
-    List.append log [ { attackType = q.attackType, blockType = q.blockType, answer = (lookupEffective q.attackType q.blockType), correct = correct } ]
+    { attackType = q.attackType, blockType = q.blockType, answer = (lookupEffective q.attackType q.blockType), correct = correct } :: log
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
