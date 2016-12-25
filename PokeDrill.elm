@@ -1,6 +1,6 @@
 module PokeDrill exposing (..)
 
-import Html exposing (Html, program, div, table, th, td, tr, text, button)
+import Html exposing (Html, program, div, table, th, td, tr, text, h1, button)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Dict
@@ -434,19 +434,38 @@ viewAnswer =
         ]
 
 
+viewCorrectRate : List LogQuestion -> Html Msg
+viewCorrectRate log =
+    if List.isEmpty log then
+        text ""
+    else
+        let
+            total =
+                List.length log
+
+            correct =
+                List.length (List.filter (\l -> l.correct) log)
+        in
+            text ("正答率 " ++ (toString correct) ++ " / " ++ (toString total) ++ " = " ++ (toString (floor (100.0 * (toFloat correct) / (toFloat total)))) ++ " %")
+
+
 view : Model -> Html Msg
 view model =
-    case model of
-        Init ->
-            div []
-                [ button [ onClick Start ] [ text "スタート" ]
-                ]
+    div []
+        [ (h1 [] [ text "ポケドリル(仮)" ])
+        , case model of
+            Init ->
+                div []
+                    [ button [ onClick Start ] [ text "スタート" ]
+                    ]
 
-        Questing q ->
-            div []
-                [ (viewAnswer)
-                , (viewQuesting q)
-                ]
+            Questing q ->
+                div []
+                    [ (viewCorrectRate q.logQuestion)
+                    , (viewAnswer)
+                    , (viewQuesting q)
+                    ]
+        ]
 
 
 
