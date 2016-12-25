@@ -1,8 +1,10 @@
 module PokeDrill exposing (..)
 
-import Html exposing (Html, program, div, table, th, td, tr, text)
+import Html exposing (Html, program, div, table, th, td, tr, text, button)
 import Html.Attributes exposing (style)
-import Dict exposing (Dict)
+import Html.Events exposing (onClick)
+import Dict
+import Random
 
 
 -- MODEL
@@ -110,6 +112,25 @@ pokeTypes =
     ]
 
 
+pokeTypeGenerator : Random.Generator PokeType
+pokeTypeGenerator =
+    Random.map
+        (\c ->
+            case List.head (List.drop c pokeTypes) of
+                Nothing ->
+                    Normal
+
+                Just t ->
+                    t
+        )
+        (Random.int 0 ((List.length pokeTypes) - 1))
+
+
+pokeTypeGenerator2 : Random.Generator ( PokeType, PokeType )
+pokeTypeGenerator2 =
+    Random.pair pokeTypeGenerator pokeTypeGenerator
+
+
 type Effectiveness
     = Effective
     | SuperEffective
@@ -131,6 +152,15 @@ effectivenessStr e =
 
         Ineffective ->
             "こうかがない"
+
+
+effectiveness : List Effectiveness
+effectiveness =
+    [ Effective
+    , SuperEffective
+    , NotVeryEffective
+    , Ineffective
+    ]
 
 
 type alias ChartEntry =
@@ -290,17 +320,31 @@ lookupEffective attackType blockType =
             c.effectiveness
 
 
-type alias ModelRow =
-    { attackType : PokeType, blockType : PokeType, effectiveness : Effectiveness }
+type alias Question =
+    { attackType : PokeType, blockType : PokeType }
 
 
-type alias Model =
-    List ModelRow
+correctAnswer : Question -> Effectiveness -> Bool
+correctAnswer q e =
+    (lookupEffective q.attackType q.blockType) == e
+
+
+type alias LogQuestion =
+    { attackType : PokeType, blockType : PokeType, answer : Effectiveness, correct : Bool }
+
+
+type alias QuestingModel =
+    { question : Question, logQuestion : List LogQuestion }
+
+
+type Model
+    = Init
+    | Questing QuestingModel
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( initModel, Cmd.none )
+    ( Init, Cmd.none )
 
 
 product : List a -> List b -> List ( a, b )
@@ -310,69 +354,138 @@ product xs ys =
         xs
 
 
-initModel : Model
-initModel =
-    List.map (\t -> { attackType = (Tuple.first t), blockType = (Tuple.second t), effectiveness = (lookupEffective (Tuple.first t) (Tuple.second t)) }) (product pokeTypes pokeTypes)
-
-
 
 -- MESSAGES
 
 
 type Msg
-    = NoOp
+    = Start
+    | QuestGenerated ( PokeType, PokeType )
+    | Answer Effectiveness
 
 
 
 -- VIEW
 
 
-textDiv txt =
-    Html.div [] [ text txt ]
+headerStyle =
+    [ style [ ( "border", "1px #303030 solid" ) ] ]
 
 
 rowStyle =
     [ style [ ( "border", "1px #707070 solid" ) ] ]
 
 
-viewHeaderRows : Html Msg
-viewHeaderRows =
+viewQuesting : QuestingModel -> Html Msg
+viewQuesting q =
+    table []
+        ((tr headerStyle
+            [ (th headerStyle [ text "こうげき" ])
+            , (th headerStyle [ text "ぼうぎょ" ])
+            , (th headerStyle [ text "こうか" ])
+            , (th headerStyle [ text "せいかい？" ])
+            ]
+         )
+            :: (List.append (viewLogQuestion q.logQuestion) [ viewQuestion q.question ])
+        )
+
+
+viewLogQuestion : List LogQuestion -> List (Html Msg)
+viewLogQuestion log =
+    List.map
+        (\q ->
+            (tr rowStyle
+                [ (td rowStyle [ text (pokeTypeJa q.attackType) ])
+                , (td rowStyle [ text (pokeTypeJa q.blockType) ])
+                , (td rowStyle [ text (effectivenessStr q.answer) ])
+                , (td rowStyle
+                    [ text
+                        (if q.correct then
+                            "○"
+                         else
+                            "×"
+                        )
+                    ]
+                  )
+                ]
+            )
+        )
+        log
+
+
+viewQuestion : Question -> Html Msg
+viewQuestion q =
     tr rowStyle
-        [ (th rowStyle [ text "こうげき" ])
-        , (th rowStyle [ text "ぼうぎょ" ])
-        , (th rowStyle [ text "こうか" ])
+        [ (td rowStyle [ text (pokeTypeJa q.attackType) ])
+        , (td rowStyle [ text (pokeTypeJa q.blockType) ])
+        , (td rowStyle [ text "?" ])
         ]
 
 
-viewRows : ModelRow -> Html Msg
-viewRows row =
-    tr rowStyle
-        [ (td rowStyle [ text (pokeTypeJa row.attackType) ])
-        , (td rowStyle [ text (pokeTypeJa row.blockType) ])
-        , (td rowStyle [ text (effectivenessStr row.effectiveness) ])
+viewAnswer : Html Msg
+viewAnswer =
+    table []
+        [ tr rowStyle
+            (List.map
+                (\e -> button [ onClick (Answer e) ] [ text (effectivenessStr e) ])
+                effectiveness
+            )
         ]
 
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ table [ style [ ( "border", "2px #303030 solid" ) ] ]
-            (List.append
-                [ viewHeaderRows ]
-                (List.map viewRows model)
-            )
-        ]
+    case model of
+        Init ->
+            div []
+                [ button [ onClick Start ] [ text "Start" ]
+                ]
+
+        Questing q ->
+            div []
+                [ (viewQuesting q)
+                , (viewAnswer)
+                ]
 
 
 
 -- UPDATE
 
 
+appendLog : List LogQuestion -> Question -> Bool -> List LogQuestion
+appendLog log q correct =
+    List.append log [ { attackType = q.attackType, blockType = q.blockType, answer = (lookupEffective q.attackType q.blockType), correct = correct } ]
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
+        Start ->
+            ( model, Random.generate QuestGenerated pokeTypeGenerator2 )
+
+        QuestGenerated ( a, b ) ->
+            let
+                newQuestion =
+                    { attackType = a, blockType = b }
+            in
+                case model of
+                    Init ->
+                        ( Questing { question = newQuestion, logQuestion = [] }, Cmd.none )
+
+                    Questing q ->
+                        ( Questing { q | question = newQuestion }, Cmd.none )
+
+        Answer e ->
+            case model of
+                Init ->
+                    ( model, Random.generate QuestGenerated pokeTypeGenerator2 )
+
+                Questing q ->
+                    let
+                        correct =
+                            (correctAnswer q.question e)
+                    in
+                        ( Questing { q | logQuestion = (appendLog q.logQuestion q.question correct) }, Random.generate QuestGenerated pokeTypeGenerator2 )
 
 
 
