@@ -9259,14 +9259,11 @@ var _user$project$PokeDrill$viewQuesting = function (q) {
 						}
 					}
 				}),
-			_1: A2(
-				_elm_lang$core$List$append,
-				_user$project$PokeDrill$viewLogQuestion(q.logQuestion),
-				{
-					ctor: '::',
-					_0: _user$project$PokeDrill$viewQuestion(q.question),
-					_1: {ctor: '[]'}
-				})
+			_1: {
+				ctor: '::',
+				_0: _user$project$PokeDrill$viewQuestion(q.question),
+				_1: _user$project$PokeDrill$viewLogQuestion(q.logQuestion)
+			}
 		});
 };
 var _user$project$PokeDrill$ChartEntry = F3(
@@ -9917,19 +9914,16 @@ var _user$project$PokeDrill$correctAnswer = F2(
 	});
 var _user$project$PokeDrill$appendLog = F3(
 	function (log, q, correct) {
-		return A2(
-			_elm_lang$core$List$append,
-			log,
-			{
-				ctor: '::',
-				_0: {
-					attackType: q.attackType,
-					blockType: q.blockType,
-					answer: A2(_user$project$PokeDrill$lookupEffective, q.attackType, q.blockType),
-					correct: correct
-				},
-				_1: {ctor: '[]'}
-			});
+		return {
+			ctor: '::',
+			_0: {
+				attackType: q.attackType,
+				blockType: q.blockType,
+				answer: A2(_user$project$PokeDrill$lookupEffective, q.attackType, q.blockType),
+				correct: correct
+			},
+			_1: log
+		};
 	});
 var _user$project$PokeDrill$Questing = function (a) {
 	return {ctor: 'Questing', _0: a};
@@ -10046,7 +10040,7 @@ var _user$project$PokeDrill$view = function (model) {
 					},
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html$text('Start'),
+						_0: _elm_lang$html$Html$text('スタート'),
 						_1: {ctor: '[]'}
 					}),
 				_1: {ctor: '[]'}
@@ -10057,10 +10051,10 @@ var _user$project$PokeDrill$view = function (model) {
 			{ctor: '[]'},
 			{
 				ctor: '::',
-				_0: _user$project$PokeDrill$viewQuesting(_p8._0),
+				_0: _user$project$PokeDrill$viewAnswer,
 				_1: {
 					ctor: '::',
-					_0: _user$project$PokeDrill$viewAnswer,
+					_0: _user$project$PokeDrill$viewQuesting(_p8._0),
 					_1: {ctor: '[]'}
 				}
 			});
