@@ -1,11 +1,15 @@
 module NBody exposing (..)
 
 import AnimationFrame exposing (diffs)
-import Html exposing (Html)
 import Svg exposing (..)
-import Svg.Attributes exposing (..)
+import Svg.Attributes as S exposing (..)
 import Time exposing (Time, millisecond, inSeconds)
 import Random exposing (Seed)
+import Html exposing (Html, Attribute, div, text, input)
+import Html.Attributes as H exposing (..)
+import Html.Events exposing (on, onInput)
+import Json.Decode exposing (string, map)
+import String
 
 
 main =
@@ -88,6 +92,7 @@ type alias Body =
 
 type alias Model =
     { bodies : List Body
+    , scale : Int
     }
 
 
@@ -105,16 +110,23 @@ randomBody : Seed -> ( Body, Seed )
 randomBody s =
     let
         ( d, s2 ) =
-            Random.step (Random.float 0 150) s
+            Random.step (Random.float 100 150) s
 
         ( a, s3 ) =
             Random.step (Random.float 0 (2 * pi)) s2
 
         ( mass, s4 ) =
-            Random.step (Random.float 100 1000) s3
+            Random.step (Random.float 1.0e3 1.0e4) s3
+
+        ( a2, s5 ) =
+            Random.step (Random.int 0 1) s4
 
         va =
-            a + 0.5 * pi
+            (a + 0.5 * pi)
+                * if a2 == 0 then
+                    1
+                  else
+                    -1
 
         vf =
             1.0
@@ -125,7 +137,7 @@ randomBody s =
             mass
             1
           )
-        , s4
+        , s5
         )
 
 
@@ -143,7 +155,7 @@ randomBodies n s =
 
 init : ( Model, Cmd Msg )
 init =
-    ( (Model (sun :: (randomBodies 100 (Random.initialSeed 1))))
+    ( (Model (sun :: (randomBodies 200 (Random.initialSeed 1))) 1)
     , Cmd.none
     )
 
@@ -154,6 +166,7 @@ init =
 
 type Msg
     = Tick Time
+    | ChangeScale String
 
 
 force : Body -> Body -> Vec2
@@ -163,13 +176,13 @@ force b1 b2 =
             (sub b2.position b1.position)
 
         r =
-            1.0e-30 + length dpos
+            length dpos
 
         mm =
             b1.mass * b2.mass
 
         f =
-            g * mm / (r * r)
+            g * mm / (r * r + 1.0e-32)
     in
         scale f (normalize dpos)
 
@@ -223,7 +236,7 @@ updateBodiesIter dt iter bodies =
 
 
 iter =
-    10
+    1
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -231,6 +244,9 @@ update msg model =
     case msg of
         Tick dtInMsec ->
             ( { model | bodies = updateBodiesIter (dtInMsec * 1.0e-3 / iter) iter model.bodies }, Cmd.none )
+
+        ChangeScale scale ->
+            ( { model | scale =  String.toInt scale |> Result.withDefault 1 }, Cmd.none )
 
 
 
@@ -246,23 +262,33 @@ subscriptions model =
 -- VIEW
 
 
-viewBody : Body -> Svg Msg
-viewBody b =
+viewBody : Int -> Body -> Svg Msg
+viewBody s b =
     let
         pos =
-            add (scale 0.5 b.position) (Vec2 300 300)
+            add (scale (1.0 / (toFloat s)) b.position) (Vec2 300 300)
     in
         circle
-            [ cx (toString pos.x)
-            , cy (toString pos.y)
-            , r (toString b.radius)
-            , stroke "none"
-            , fill "#000"
+            [ S.cx (toString pos.x)
+            , S.cy (toString pos.y)
+            , S.r (toString b.radius)
+            , S.stroke "none"
+            , S.fill "#000"
             ]
             []
 
 
 view : Model -> Html Msg
 view model =
-    svg [ viewBox "0 0 600 600", width "600px" ]
-        (List.map viewBody model.bodies)
+    div []
+        [ svg [ viewBox "0 0 600 600", S.width "600px" ]
+            (List.map (viewBody model.scale) model.bodies)
+        , input
+            [ H.type_ "range"
+            , H.min "1"
+            , H.max "10000"
+            , value <| toString model.scale
+            , onInput ChangeScale
+            ]
+            []
+        ]
