@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html><head><meta charset="UTF-8"><title>Main</title><style>html,head,body { padding:0; margin:0; }
+<html><head><meta charset="UTF-8"><title>NBody</title><style>html,head,body { padding:0; margin:0; }
 body { font-family: calibri, helvetica, arial, sans-serif; }</style><script type="text/javascript">
 (function() {
 'use strict';
@@ -136,6 +136,28 @@ function A9(fun, a, b, c, d, e, f, g, h, i)
     ? fun.func(a, b, c, d, e, f, g, h, i)
     : fun(a)(b)(c)(d)(e)(f)(g)(h)(i);
 }
+var _elm_lang$animation_frame$Native_AnimationFrame = function()
+{
+
+function create()
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		var id = requestAnimationFrame(function() {
+			callback(_elm_lang$core$Native_Scheduler.succeed(Date.now()));
+		});
+
+		return function() {
+			cancelAnimationFrame(id);
+		};
+	});
+}
+
+return {
+	create: create
+};
+
+}();
 //import Native.Utils //
 
 var _elm_lang$core$Native_Basics = function() {
@@ -4447,6 +4469,9 @@ var _elm_lang$core$Time$subMap = F2(
 			});
 	});
 _elm_lang$core$Native_Platform.effectManagers['Time'] = {pkg: 'elm-lang/core', init: _elm_lang$core$Time$init, onEffects: _elm_lang$core$Time$onEffects, onSelfMsg: _elm_lang$core$Time$onSelfMsg, tag: 'sub', subMap: _elm_lang$core$Time$subMap};
+var _elm_lang$core$Process$kill = _elm_lang$core$Native_Scheduler.kill;
+var _elm_lang$core$Process$sleep = _elm_lang$core$Native_Scheduler.sleep;
+var _elm_lang$core$Process$spawn = _elm_lang$core$Native_Scheduler.spawn;
 var _elm_lang$core$Debug$crash = _elm_lang$core$Native_Debug.crash;
 var _elm_lang$core$Debug$log = _elm_lang$core$Native_Debug.log;
 var _elm_lang$core$Tuple$mapSecond = F2(
@@ -4475,6 +4500,147 @@ var _elm_lang$core$Tuple$first = function (_p6) {
 	var _p7 = _p6;
 	return _p7._0;
 };
+var _elm_lang$animation_frame$AnimationFrame$rAF = _elm_lang$animation_frame$Native_AnimationFrame.create(
+	{ctor: '_Tuple0'});
+var _elm_lang$animation_frame$AnimationFrame$subscription = _elm_lang$core$Native_Platform.leaf('AnimationFrame');
+var _elm_lang$animation_frame$AnimationFrame$State = F3(
+	function (a, b, c) {
+		return {subs: a, request: b, oldTime: c};
+	});
+var _elm_lang$animation_frame$AnimationFrame$init = _elm_lang$core$Task$succeed(
+	A3(
+		_elm_lang$animation_frame$AnimationFrame$State,
+		{ctor: '[]'},
+		_elm_lang$core$Maybe$Nothing,
+		0));
+var _elm_lang$animation_frame$AnimationFrame$onEffects = F3(
+	function (router, subs, _p0) {
+		var _p1 = _p0;
+		var _p5 = _p1.request;
+		var _p4 = _p1.oldTime;
+		var _p2 = {ctor: '_Tuple2', _0: _p5, _1: subs};
+		if (_p2._0.ctor === 'Nothing') {
+			if (_p2._1.ctor === '[]') {
+				return _elm_lang$core$Task$succeed(
+					A3(
+						_elm_lang$animation_frame$AnimationFrame$State,
+						{ctor: '[]'},
+						_elm_lang$core$Maybe$Nothing,
+						_p4));
+			} else {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (pid) {
+						return A2(
+							_elm_lang$core$Task$andThen,
+							function (time) {
+								return _elm_lang$core$Task$succeed(
+									A3(
+										_elm_lang$animation_frame$AnimationFrame$State,
+										subs,
+										_elm_lang$core$Maybe$Just(pid),
+										time));
+							},
+							_elm_lang$core$Time$now);
+					},
+					_elm_lang$core$Process$spawn(
+						A2(
+							_elm_lang$core$Task$andThen,
+							_elm_lang$core$Platform$sendToSelf(router),
+							_elm_lang$animation_frame$AnimationFrame$rAF)));
+			}
+		} else {
+			if (_p2._1.ctor === '[]') {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (_p3) {
+						return _elm_lang$core$Task$succeed(
+							A3(
+								_elm_lang$animation_frame$AnimationFrame$State,
+								{ctor: '[]'},
+								_elm_lang$core$Maybe$Nothing,
+								_p4));
+					},
+					_elm_lang$core$Process$kill(_p2._0._0));
+			} else {
+				return _elm_lang$core$Task$succeed(
+					A3(_elm_lang$animation_frame$AnimationFrame$State, subs, _p5, _p4));
+			}
+		}
+	});
+var _elm_lang$animation_frame$AnimationFrame$onSelfMsg = F3(
+	function (router, newTime, _p6) {
+		var _p7 = _p6;
+		var _p10 = _p7.subs;
+		var diff = newTime - _p7.oldTime;
+		var send = function (sub) {
+			var _p8 = sub;
+			if (_p8.ctor === 'Time') {
+				return A2(
+					_elm_lang$core$Platform$sendToApp,
+					router,
+					_p8._0(newTime));
+			} else {
+				return A2(
+					_elm_lang$core$Platform$sendToApp,
+					router,
+					_p8._0(diff));
+			}
+		};
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (pid) {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (_p9) {
+						return _elm_lang$core$Task$succeed(
+							A3(
+								_elm_lang$animation_frame$AnimationFrame$State,
+								_p10,
+								_elm_lang$core$Maybe$Just(pid),
+								newTime));
+					},
+					_elm_lang$core$Task$sequence(
+						A2(_elm_lang$core$List$map, send, _p10)));
+			},
+			_elm_lang$core$Process$spawn(
+				A2(
+					_elm_lang$core$Task$andThen,
+					_elm_lang$core$Platform$sendToSelf(router),
+					_elm_lang$animation_frame$AnimationFrame$rAF)));
+	});
+var _elm_lang$animation_frame$AnimationFrame$Diff = function (a) {
+	return {ctor: 'Diff', _0: a};
+};
+var _elm_lang$animation_frame$AnimationFrame$diffs = function (tagger) {
+	return _elm_lang$animation_frame$AnimationFrame$subscription(
+		_elm_lang$animation_frame$AnimationFrame$Diff(tagger));
+};
+var _elm_lang$animation_frame$AnimationFrame$Time = function (a) {
+	return {ctor: 'Time', _0: a};
+};
+var _elm_lang$animation_frame$AnimationFrame$times = function (tagger) {
+	return _elm_lang$animation_frame$AnimationFrame$subscription(
+		_elm_lang$animation_frame$AnimationFrame$Time(tagger));
+};
+var _elm_lang$animation_frame$AnimationFrame$subMap = F2(
+	function (func, sub) {
+		var _p11 = sub;
+		if (_p11.ctor === 'Time') {
+			return _elm_lang$animation_frame$AnimationFrame$Time(
+				function (_p12) {
+					return func(
+						_p11._0(_p12));
+				});
+		} else {
+			return _elm_lang$animation_frame$AnimationFrame$Diff(
+				function (_p13) {
+					return func(
+						_p11._0(_p13));
+				});
+		}
+	});
+_elm_lang$core$Native_Platform.effectManagers['AnimationFrame'] = {pkg: 'elm-lang/animation-frame', init: _elm_lang$animation_frame$AnimationFrame$init, onEffects: _elm_lang$animation_frame$AnimationFrame$onEffects, onSelfMsg: _elm_lang$animation_frame$AnimationFrame$onSelfMsg, tag: 'sub', subMap: _elm_lang$animation_frame$AnimationFrame$subMap};
 //import Native.List //
 
 var _elm_lang$core$Native_Array = function() {
@@ -5495,171 +5661,6 @@ var _elm_lang$core$Array$repeat = F2(
 			_elm_lang$core$Basics$always(e));
 	});
 var _elm_lang$core$Array$Array = {ctor: 'Array'};
-var _elm_lang$core$Color$fmod = F2(
-	function (f, n) {
-		var integer = _elm_lang$core$Basics$floor(f);
-		return (_elm_lang$core$Basics$toFloat(
-			A2(_elm_lang$core$Basics_ops['%'], integer, n)) + f) - _elm_lang$core$Basics$toFloat(integer);
-	});
-var _elm_lang$core$Color$rgbToHsl = F3(
-	function (red, green, blue) {
-		var b = _elm_lang$core$Basics$toFloat(blue) / 255;
-		var g = _elm_lang$core$Basics$toFloat(green) / 255;
-		var r = _elm_lang$core$Basics$toFloat(red) / 255;
-		var cMax = A2(
-			_elm_lang$core$Basics$max,
-			A2(_elm_lang$core$Basics$max, r, g),
-			b);
-		var cMin = A2(
-			_elm_lang$core$Basics$min,
-			A2(_elm_lang$core$Basics$min, r, g),
-			b);
-		var c = cMax - cMin;
-		var lightness = (cMax + cMin) / 2;
-		var saturation = _elm_lang$core$Native_Utils.eq(lightness, 0) ? 0 : (c / (1 - _elm_lang$core$Basics$abs((2 * lightness) - 1)));
-		var hue = _elm_lang$core$Basics$degrees(60) * (_elm_lang$core$Native_Utils.eq(cMax, r) ? A2(_elm_lang$core$Color$fmod, (g - b) / c, 6) : (_elm_lang$core$Native_Utils.eq(cMax, g) ? (((b - r) / c) + 2) : (((r - g) / c) + 4)));
-		return {ctor: '_Tuple3', _0: hue, _1: saturation, _2: lightness};
-	});
-var _elm_lang$core$Color$hslToRgb = F3(
-	function (hue, saturation, lightness) {
-		var normHue = hue / _elm_lang$core$Basics$degrees(60);
-		var chroma = (1 - _elm_lang$core$Basics$abs((2 * lightness) - 1)) * saturation;
-		var x = chroma * (1 - _elm_lang$core$Basics$abs(
-			A2(_elm_lang$core$Color$fmod, normHue, 2) - 1));
-		var _p0 = (_elm_lang$core$Native_Utils.cmp(normHue, 0) < 0) ? {ctor: '_Tuple3', _0: 0, _1: 0, _2: 0} : ((_elm_lang$core$Native_Utils.cmp(normHue, 1) < 0) ? {ctor: '_Tuple3', _0: chroma, _1: x, _2: 0} : ((_elm_lang$core$Native_Utils.cmp(normHue, 2) < 0) ? {ctor: '_Tuple3', _0: x, _1: chroma, _2: 0} : ((_elm_lang$core$Native_Utils.cmp(normHue, 3) < 0) ? {ctor: '_Tuple3', _0: 0, _1: chroma, _2: x} : ((_elm_lang$core$Native_Utils.cmp(normHue, 4) < 0) ? {ctor: '_Tuple3', _0: 0, _1: x, _2: chroma} : ((_elm_lang$core$Native_Utils.cmp(normHue, 5) < 0) ? {ctor: '_Tuple3', _0: x, _1: 0, _2: chroma} : ((_elm_lang$core$Native_Utils.cmp(normHue, 6) < 0) ? {ctor: '_Tuple3', _0: chroma, _1: 0, _2: x} : {ctor: '_Tuple3', _0: 0, _1: 0, _2: 0}))))));
-		var r = _p0._0;
-		var g = _p0._1;
-		var b = _p0._2;
-		var m = lightness - (chroma / 2);
-		return {ctor: '_Tuple3', _0: r + m, _1: g + m, _2: b + m};
-	});
-var _elm_lang$core$Color$toRgb = function (color) {
-	var _p1 = color;
-	if (_p1.ctor === 'RGBA') {
-		return {red: _p1._0, green: _p1._1, blue: _p1._2, alpha: _p1._3};
-	} else {
-		var _p2 = A3(_elm_lang$core$Color$hslToRgb, _p1._0, _p1._1, _p1._2);
-		var r = _p2._0;
-		var g = _p2._1;
-		var b = _p2._2;
-		return {
-			red: _elm_lang$core$Basics$round(255 * r),
-			green: _elm_lang$core$Basics$round(255 * g),
-			blue: _elm_lang$core$Basics$round(255 * b),
-			alpha: _p1._3
-		};
-	}
-};
-var _elm_lang$core$Color$toHsl = function (color) {
-	var _p3 = color;
-	if (_p3.ctor === 'HSLA') {
-		return {hue: _p3._0, saturation: _p3._1, lightness: _p3._2, alpha: _p3._3};
-	} else {
-		var _p4 = A3(_elm_lang$core$Color$rgbToHsl, _p3._0, _p3._1, _p3._2);
-		var h = _p4._0;
-		var s = _p4._1;
-		var l = _p4._2;
-		return {hue: h, saturation: s, lightness: l, alpha: _p3._3};
-	}
-};
-var _elm_lang$core$Color$HSLA = F4(
-	function (a, b, c, d) {
-		return {ctor: 'HSLA', _0: a, _1: b, _2: c, _3: d};
-	});
-var _elm_lang$core$Color$hsla = F4(
-	function (hue, saturation, lightness, alpha) {
-		return A4(
-			_elm_lang$core$Color$HSLA,
-			hue - _elm_lang$core$Basics$turns(
-				_elm_lang$core$Basics$toFloat(
-					_elm_lang$core$Basics$floor(hue / (2 * _elm_lang$core$Basics$pi)))),
-			saturation,
-			lightness,
-			alpha);
-	});
-var _elm_lang$core$Color$hsl = F3(
-	function (hue, saturation, lightness) {
-		return A4(_elm_lang$core$Color$hsla, hue, saturation, lightness, 1);
-	});
-var _elm_lang$core$Color$complement = function (color) {
-	var _p5 = color;
-	if (_p5.ctor === 'HSLA') {
-		return A4(
-			_elm_lang$core$Color$hsla,
-			_p5._0 + _elm_lang$core$Basics$degrees(180),
-			_p5._1,
-			_p5._2,
-			_p5._3);
-	} else {
-		var _p6 = A3(_elm_lang$core$Color$rgbToHsl, _p5._0, _p5._1, _p5._2);
-		var h = _p6._0;
-		var s = _p6._1;
-		var l = _p6._2;
-		return A4(
-			_elm_lang$core$Color$hsla,
-			h + _elm_lang$core$Basics$degrees(180),
-			s,
-			l,
-			_p5._3);
-	}
-};
-var _elm_lang$core$Color$grayscale = function (p) {
-	return A4(_elm_lang$core$Color$HSLA, 0, 0, 1 - p, 1);
-};
-var _elm_lang$core$Color$greyscale = function (p) {
-	return A4(_elm_lang$core$Color$HSLA, 0, 0, 1 - p, 1);
-};
-var _elm_lang$core$Color$RGBA = F4(
-	function (a, b, c, d) {
-		return {ctor: 'RGBA', _0: a, _1: b, _2: c, _3: d};
-	});
-var _elm_lang$core$Color$rgba = _elm_lang$core$Color$RGBA;
-var _elm_lang$core$Color$rgb = F3(
-	function (r, g, b) {
-		return A4(_elm_lang$core$Color$RGBA, r, g, b, 1);
-	});
-var _elm_lang$core$Color$lightRed = A4(_elm_lang$core$Color$RGBA, 239, 41, 41, 1);
-var _elm_lang$core$Color$red = A4(_elm_lang$core$Color$RGBA, 204, 0, 0, 1);
-var _elm_lang$core$Color$darkRed = A4(_elm_lang$core$Color$RGBA, 164, 0, 0, 1);
-var _elm_lang$core$Color$lightOrange = A4(_elm_lang$core$Color$RGBA, 252, 175, 62, 1);
-var _elm_lang$core$Color$orange = A4(_elm_lang$core$Color$RGBA, 245, 121, 0, 1);
-var _elm_lang$core$Color$darkOrange = A4(_elm_lang$core$Color$RGBA, 206, 92, 0, 1);
-var _elm_lang$core$Color$lightYellow = A4(_elm_lang$core$Color$RGBA, 255, 233, 79, 1);
-var _elm_lang$core$Color$yellow = A4(_elm_lang$core$Color$RGBA, 237, 212, 0, 1);
-var _elm_lang$core$Color$darkYellow = A4(_elm_lang$core$Color$RGBA, 196, 160, 0, 1);
-var _elm_lang$core$Color$lightGreen = A4(_elm_lang$core$Color$RGBA, 138, 226, 52, 1);
-var _elm_lang$core$Color$green = A4(_elm_lang$core$Color$RGBA, 115, 210, 22, 1);
-var _elm_lang$core$Color$darkGreen = A4(_elm_lang$core$Color$RGBA, 78, 154, 6, 1);
-var _elm_lang$core$Color$lightBlue = A4(_elm_lang$core$Color$RGBA, 114, 159, 207, 1);
-var _elm_lang$core$Color$blue = A4(_elm_lang$core$Color$RGBA, 52, 101, 164, 1);
-var _elm_lang$core$Color$darkBlue = A4(_elm_lang$core$Color$RGBA, 32, 74, 135, 1);
-var _elm_lang$core$Color$lightPurple = A4(_elm_lang$core$Color$RGBA, 173, 127, 168, 1);
-var _elm_lang$core$Color$purple = A4(_elm_lang$core$Color$RGBA, 117, 80, 123, 1);
-var _elm_lang$core$Color$darkPurple = A4(_elm_lang$core$Color$RGBA, 92, 53, 102, 1);
-var _elm_lang$core$Color$lightBrown = A4(_elm_lang$core$Color$RGBA, 233, 185, 110, 1);
-var _elm_lang$core$Color$brown = A4(_elm_lang$core$Color$RGBA, 193, 125, 17, 1);
-var _elm_lang$core$Color$darkBrown = A4(_elm_lang$core$Color$RGBA, 143, 89, 2, 1);
-var _elm_lang$core$Color$black = A4(_elm_lang$core$Color$RGBA, 0, 0, 0, 1);
-var _elm_lang$core$Color$white = A4(_elm_lang$core$Color$RGBA, 255, 255, 255, 1);
-var _elm_lang$core$Color$lightGrey = A4(_elm_lang$core$Color$RGBA, 238, 238, 236, 1);
-var _elm_lang$core$Color$grey = A4(_elm_lang$core$Color$RGBA, 211, 215, 207, 1);
-var _elm_lang$core$Color$darkGrey = A4(_elm_lang$core$Color$RGBA, 186, 189, 182, 1);
-var _elm_lang$core$Color$lightGray = A4(_elm_lang$core$Color$RGBA, 238, 238, 236, 1);
-var _elm_lang$core$Color$gray = A4(_elm_lang$core$Color$RGBA, 211, 215, 207, 1);
-var _elm_lang$core$Color$darkGray = A4(_elm_lang$core$Color$RGBA, 186, 189, 182, 1);
-var _elm_lang$core$Color$lightCharcoal = A4(_elm_lang$core$Color$RGBA, 136, 138, 133, 1);
-var _elm_lang$core$Color$charcoal = A4(_elm_lang$core$Color$RGBA, 85, 87, 83, 1);
-var _elm_lang$core$Color$darkCharcoal = A4(_elm_lang$core$Color$RGBA, 46, 52, 54, 1);
-var _elm_lang$core$Color$Radial = F5(
-	function (a, b, c, d, e) {
-		return {ctor: 'Radial', _0: a, _1: b, _2: c, _3: d, _4: e};
-	});
-var _elm_lang$core$Color$radial = _elm_lang$core$Color$Radial;
-var _elm_lang$core$Color$Linear = F3(
-	function (a, b, c) {
-		return {ctor: 'Linear', _0: a, _1: b, _2: c};
-	});
-var _elm_lang$core$Color$linear = _elm_lang$core$Color$Linear;
 //import Maybe, Native.Array, Native.List, Native.Utils, Result //
 
 var _elm_lang$core$Native_Json = function() {
@@ -6307,6 +6308,384 @@ var _elm_lang$core$Json_Decode$int = _elm_lang$core$Native_Json.decodePrimitive(
 var _elm_lang$core$Json_Decode$bool = _elm_lang$core$Native_Json.decodePrimitive('bool');
 var _elm_lang$core$Json_Decode$string = _elm_lang$core$Native_Json.decodePrimitive('string');
 var _elm_lang$core$Json_Decode$Decoder = {ctor: 'Decoder'};
+var _elm_lang$core$Random$onSelfMsg = F3(
+	function (_p1, _p0, seed) {
+		return _elm_lang$core$Task$succeed(seed);
+	});
+var _elm_lang$core$Random$magicNum8 = 2147483562;
+var _elm_lang$core$Random$range = function (_p2) {
+	return {ctor: '_Tuple2', _0: 0, _1: _elm_lang$core$Random$magicNum8};
+};
+var _elm_lang$core$Random$magicNum7 = 2147483399;
+var _elm_lang$core$Random$magicNum6 = 2147483563;
+var _elm_lang$core$Random$magicNum5 = 3791;
+var _elm_lang$core$Random$magicNum4 = 40692;
+var _elm_lang$core$Random$magicNum3 = 52774;
+var _elm_lang$core$Random$magicNum2 = 12211;
+var _elm_lang$core$Random$magicNum1 = 53668;
+var _elm_lang$core$Random$magicNum0 = 40014;
+var _elm_lang$core$Random$step = F2(
+	function (_p3, seed) {
+		var _p4 = _p3;
+		return _p4._0(seed);
+	});
+var _elm_lang$core$Random$onEffects = F3(
+	function (router, commands, seed) {
+		var _p5 = commands;
+		if (_p5.ctor === '[]') {
+			return _elm_lang$core$Task$succeed(seed);
+		} else {
+			var _p6 = A2(_elm_lang$core$Random$step, _p5._0._0, seed);
+			var value = _p6._0;
+			var newSeed = _p6._1;
+			return A2(
+				_elm_lang$core$Task$andThen,
+				function (_p7) {
+					return A3(_elm_lang$core$Random$onEffects, router, _p5._1, newSeed);
+				},
+				A2(_elm_lang$core$Platform$sendToApp, router, value));
+		}
+	});
+var _elm_lang$core$Random$listHelp = F4(
+	function (list, n, generate, seed) {
+		listHelp:
+		while (true) {
+			if (_elm_lang$core$Native_Utils.cmp(n, 1) < 0) {
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$List$reverse(list),
+					_1: seed
+				};
+			} else {
+				var _p8 = generate(seed);
+				var value = _p8._0;
+				var newSeed = _p8._1;
+				var _v2 = {ctor: '::', _0: value, _1: list},
+					_v3 = n - 1,
+					_v4 = generate,
+					_v5 = newSeed;
+				list = _v2;
+				n = _v3;
+				generate = _v4;
+				seed = _v5;
+				continue listHelp;
+			}
+		}
+	});
+var _elm_lang$core$Random$minInt = -2147483648;
+var _elm_lang$core$Random$maxInt = 2147483647;
+var _elm_lang$core$Random$iLogBase = F2(
+	function (b, i) {
+		return (_elm_lang$core$Native_Utils.cmp(i, b) < 0) ? 1 : (1 + A2(_elm_lang$core$Random$iLogBase, b, (i / b) | 0));
+	});
+var _elm_lang$core$Random$command = _elm_lang$core$Native_Platform.leaf('Random');
+var _elm_lang$core$Random$Generator = function (a) {
+	return {ctor: 'Generator', _0: a};
+};
+var _elm_lang$core$Random$list = F2(
+	function (n, _p9) {
+		var _p10 = _p9;
+		return _elm_lang$core$Random$Generator(
+			function (seed) {
+				return A4(
+					_elm_lang$core$Random$listHelp,
+					{ctor: '[]'},
+					n,
+					_p10._0,
+					seed);
+			});
+	});
+var _elm_lang$core$Random$map = F2(
+	function (func, _p11) {
+		var _p12 = _p11;
+		return _elm_lang$core$Random$Generator(
+			function (seed0) {
+				var _p13 = _p12._0(seed0);
+				var a = _p13._0;
+				var seed1 = _p13._1;
+				return {
+					ctor: '_Tuple2',
+					_0: func(a),
+					_1: seed1
+				};
+			});
+	});
+var _elm_lang$core$Random$map2 = F3(
+	function (func, _p15, _p14) {
+		var _p16 = _p15;
+		var _p17 = _p14;
+		return _elm_lang$core$Random$Generator(
+			function (seed0) {
+				var _p18 = _p16._0(seed0);
+				var a = _p18._0;
+				var seed1 = _p18._1;
+				var _p19 = _p17._0(seed1);
+				var b = _p19._0;
+				var seed2 = _p19._1;
+				return {
+					ctor: '_Tuple2',
+					_0: A2(func, a, b),
+					_1: seed2
+				};
+			});
+	});
+var _elm_lang$core$Random$pair = F2(
+	function (genA, genB) {
+		return A3(
+			_elm_lang$core$Random$map2,
+			F2(
+				function (v0, v1) {
+					return {ctor: '_Tuple2', _0: v0, _1: v1};
+				}),
+			genA,
+			genB);
+	});
+var _elm_lang$core$Random$map3 = F4(
+	function (func, _p22, _p21, _p20) {
+		var _p23 = _p22;
+		var _p24 = _p21;
+		var _p25 = _p20;
+		return _elm_lang$core$Random$Generator(
+			function (seed0) {
+				var _p26 = _p23._0(seed0);
+				var a = _p26._0;
+				var seed1 = _p26._1;
+				var _p27 = _p24._0(seed1);
+				var b = _p27._0;
+				var seed2 = _p27._1;
+				var _p28 = _p25._0(seed2);
+				var c = _p28._0;
+				var seed3 = _p28._1;
+				return {
+					ctor: '_Tuple2',
+					_0: A3(func, a, b, c),
+					_1: seed3
+				};
+			});
+	});
+var _elm_lang$core$Random$map4 = F5(
+	function (func, _p32, _p31, _p30, _p29) {
+		var _p33 = _p32;
+		var _p34 = _p31;
+		var _p35 = _p30;
+		var _p36 = _p29;
+		return _elm_lang$core$Random$Generator(
+			function (seed0) {
+				var _p37 = _p33._0(seed0);
+				var a = _p37._0;
+				var seed1 = _p37._1;
+				var _p38 = _p34._0(seed1);
+				var b = _p38._0;
+				var seed2 = _p38._1;
+				var _p39 = _p35._0(seed2);
+				var c = _p39._0;
+				var seed3 = _p39._1;
+				var _p40 = _p36._0(seed3);
+				var d = _p40._0;
+				var seed4 = _p40._1;
+				return {
+					ctor: '_Tuple2',
+					_0: A4(func, a, b, c, d),
+					_1: seed4
+				};
+			});
+	});
+var _elm_lang$core$Random$map5 = F6(
+	function (func, _p45, _p44, _p43, _p42, _p41) {
+		var _p46 = _p45;
+		var _p47 = _p44;
+		var _p48 = _p43;
+		var _p49 = _p42;
+		var _p50 = _p41;
+		return _elm_lang$core$Random$Generator(
+			function (seed0) {
+				var _p51 = _p46._0(seed0);
+				var a = _p51._0;
+				var seed1 = _p51._1;
+				var _p52 = _p47._0(seed1);
+				var b = _p52._0;
+				var seed2 = _p52._1;
+				var _p53 = _p48._0(seed2);
+				var c = _p53._0;
+				var seed3 = _p53._1;
+				var _p54 = _p49._0(seed3);
+				var d = _p54._0;
+				var seed4 = _p54._1;
+				var _p55 = _p50._0(seed4);
+				var e = _p55._0;
+				var seed5 = _p55._1;
+				return {
+					ctor: '_Tuple2',
+					_0: A5(func, a, b, c, d, e),
+					_1: seed5
+				};
+			});
+	});
+var _elm_lang$core$Random$andThen = F2(
+	function (callback, _p56) {
+		var _p57 = _p56;
+		return _elm_lang$core$Random$Generator(
+			function (seed) {
+				var _p58 = _p57._0(seed);
+				var result = _p58._0;
+				var newSeed = _p58._1;
+				var _p59 = callback(result);
+				var genB = _p59._0;
+				return genB(newSeed);
+			});
+	});
+var _elm_lang$core$Random$State = F2(
+	function (a, b) {
+		return {ctor: 'State', _0: a, _1: b};
+	});
+var _elm_lang$core$Random$initState = function (seed) {
+	var s = A2(_elm_lang$core$Basics$max, seed, 0 - seed);
+	var q = (s / (_elm_lang$core$Random$magicNum6 - 1)) | 0;
+	var s2 = A2(_elm_lang$core$Basics_ops['%'], q, _elm_lang$core$Random$magicNum7 - 1);
+	var s1 = A2(_elm_lang$core$Basics_ops['%'], s, _elm_lang$core$Random$magicNum6 - 1);
+	return A2(_elm_lang$core$Random$State, s1 + 1, s2 + 1);
+};
+var _elm_lang$core$Random$next = function (_p60) {
+	var _p61 = _p60;
+	var _p63 = _p61._1;
+	var _p62 = _p61._0;
+	var k2 = (_p63 / _elm_lang$core$Random$magicNum3) | 0;
+	var rawState2 = (_elm_lang$core$Random$magicNum4 * (_p63 - (k2 * _elm_lang$core$Random$magicNum3))) - (k2 * _elm_lang$core$Random$magicNum5);
+	var newState2 = (_elm_lang$core$Native_Utils.cmp(rawState2, 0) < 0) ? (rawState2 + _elm_lang$core$Random$magicNum7) : rawState2;
+	var k1 = (_p62 / _elm_lang$core$Random$magicNum1) | 0;
+	var rawState1 = (_elm_lang$core$Random$magicNum0 * (_p62 - (k1 * _elm_lang$core$Random$magicNum1))) - (k1 * _elm_lang$core$Random$magicNum2);
+	var newState1 = (_elm_lang$core$Native_Utils.cmp(rawState1, 0) < 0) ? (rawState1 + _elm_lang$core$Random$magicNum6) : rawState1;
+	var z = newState1 - newState2;
+	var newZ = (_elm_lang$core$Native_Utils.cmp(z, 1) < 0) ? (z + _elm_lang$core$Random$magicNum8) : z;
+	return {
+		ctor: '_Tuple2',
+		_0: newZ,
+		_1: A2(_elm_lang$core$Random$State, newState1, newState2)
+	};
+};
+var _elm_lang$core$Random$split = function (_p64) {
+	var _p65 = _p64;
+	var _p68 = _p65._1;
+	var _p67 = _p65._0;
+	var _p66 = _elm_lang$core$Tuple$second(
+		_elm_lang$core$Random$next(_p65));
+	var t1 = _p66._0;
+	var t2 = _p66._1;
+	var new_s2 = _elm_lang$core$Native_Utils.eq(_p68, 1) ? (_elm_lang$core$Random$magicNum7 - 1) : (_p68 - 1);
+	var new_s1 = _elm_lang$core$Native_Utils.eq(_p67, _elm_lang$core$Random$magicNum6 - 1) ? 1 : (_p67 + 1);
+	return {
+		ctor: '_Tuple2',
+		_0: A2(_elm_lang$core$Random$State, new_s1, t2),
+		_1: A2(_elm_lang$core$Random$State, t1, new_s2)
+	};
+};
+var _elm_lang$core$Random$Seed = function (a) {
+	return {ctor: 'Seed', _0: a};
+};
+var _elm_lang$core$Random$int = F2(
+	function (a, b) {
+		return _elm_lang$core$Random$Generator(
+			function (_p69) {
+				var _p70 = _p69;
+				var _p75 = _p70._0;
+				var base = 2147483561;
+				var f = F3(
+					function (n, acc, state) {
+						f:
+						while (true) {
+							var _p71 = n;
+							if (_p71 === 0) {
+								return {ctor: '_Tuple2', _0: acc, _1: state};
+							} else {
+								var _p72 = _p75.next(state);
+								var x = _p72._0;
+								var nextState = _p72._1;
+								var _v27 = n - 1,
+									_v28 = x + (acc * base),
+									_v29 = nextState;
+								n = _v27;
+								acc = _v28;
+								state = _v29;
+								continue f;
+							}
+						}
+					});
+				var _p73 = (_elm_lang$core$Native_Utils.cmp(a, b) < 0) ? {ctor: '_Tuple2', _0: a, _1: b} : {ctor: '_Tuple2', _0: b, _1: a};
+				var lo = _p73._0;
+				var hi = _p73._1;
+				var k = (hi - lo) + 1;
+				var n = A2(_elm_lang$core$Random$iLogBase, base, k);
+				var _p74 = A3(f, n, 1, _p75.state);
+				var v = _p74._0;
+				var nextState = _p74._1;
+				return {
+					ctor: '_Tuple2',
+					_0: lo + A2(_elm_lang$core$Basics_ops['%'], v, k),
+					_1: _elm_lang$core$Random$Seed(
+						_elm_lang$core$Native_Utils.update(
+							_p75,
+							{state: nextState}))
+				};
+			});
+	});
+var _elm_lang$core$Random$bool = A2(
+	_elm_lang$core$Random$map,
+	F2(
+		function (x, y) {
+			return _elm_lang$core$Native_Utils.eq(x, y);
+		})(1),
+	A2(_elm_lang$core$Random$int, 0, 1));
+var _elm_lang$core$Random$float = F2(
+	function (a, b) {
+		return _elm_lang$core$Random$Generator(
+			function (seed) {
+				var _p76 = A2(
+					_elm_lang$core$Random$step,
+					A2(_elm_lang$core$Random$int, _elm_lang$core$Random$minInt, _elm_lang$core$Random$maxInt),
+					seed);
+				var number = _p76._0;
+				var newSeed = _p76._1;
+				var negativeOneToOne = _elm_lang$core$Basics$toFloat(number) / _elm_lang$core$Basics$toFloat(_elm_lang$core$Random$maxInt - _elm_lang$core$Random$minInt);
+				var _p77 = (_elm_lang$core$Native_Utils.cmp(a, b) < 0) ? {ctor: '_Tuple2', _0: a, _1: b} : {ctor: '_Tuple2', _0: b, _1: a};
+				var lo = _p77._0;
+				var hi = _p77._1;
+				var scaled = ((lo + hi) / 2) + ((hi - lo) * negativeOneToOne);
+				return {ctor: '_Tuple2', _0: scaled, _1: newSeed};
+			});
+	});
+var _elm_lang$core$Random$initialSeed = function (n) {
+	return _elm_lang$core$Random$Seed(
+		{
+			state: _elm_lang$core$Random$initState(n),
+			next: _elm_lang$core$Random$next,
+			split: _elm_lang$core$Random$split,
+			range: _elm_lang$core$Random$range
+		});
+};
+var _elm_lang$core$Random$init = A2(
+	_elm_lang$core$Task$andThen,
+	function (t) {
+		return _elm_lang$core$Task$succeed(
+			_elm_lang$core$Random$initialSeed(
+				_elm_lang$core$Basics$round(t)));
+	},
+	_elm_lang$core$Time$now);
+var _elm_lang$core$Random$Generate = function (a) {
+	return {ctor: 'Generate', _0: a};
+};
+var _elm_lang$core$Random$generate = F2(
+	function (tagger, generator) {
+		return _elm_lang$core$Random$command(
+			_elm_lang$core$Random$Generate(
+				A2(_elm_lang$core$Random$map, tagger, generator)));
+	});
+var _elm_lang$core$Random$cmdMap = F2(
+	function (func, _p78) {
+		var _p79 = _p78;
+		return _elm_lang$core$Random$Generate(
+			A2(_elm_lang$core$Random$map, func, _p79._0));
+	});
+_elm_lang$core$Native_Platform.effectManagers['Random'] = {pkg: 'elm-lang/core', init: _elm_lang$core$Random$init, onEffects: _elm_lang$core$Random$onEffects, onSelfMsg: _elm_lang$core$Random$onSelfMsg, tag: 'cmd', cmdMap: _elm_lang$core$Random$cmdMap};
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrap;
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrapWithFlags;
 
@@ -8681,127 +9060,268 @@ var _elm_lang$svg$Svg_Attributes$additive = _elm_lang$virtual_dom$VirtualDom$att
 var _elm_lang$svg$Svg_Attributes$accumulate = _elm_lang$virtual_dom$VirtualDom$attribute('accumulate');
 var _elm_lang$svg$Svg_Attributes$accelerate = _elm_lang$virtual_dom$VirtualDom$attribute('accelerate');
 var _elm_lang$svg$Svg_Attributes$accentHeight = _elm_lang$virtual_dom$VirtualDom$attribute('accent-height');
-var _user$project$Main$aLine = F3(
-	function (_p1, _p0, color) {
-		var _p2 = _p1;
-		var _p3 = _p0;
-		var _p4 = _elm_lang$core$Basics$fromPolar(
-			{ctor: '_Tuple2', _0: _p3._0, _1: _p3._1});
-		var lx2 = _p4._0;
-		var ly2 = _p4._1;
-		var _p5 = _elm_lang$core$Basics$fromPolar(
-			{ctor: '_Tuple2', _0: _p2._0, _1: _p2._1});
-		var lx1 = _p5._0;
-		var ly1 = _p5._1;
+var _user$project$NBody$iter = 10;
+var _user$project$NBody$length = function (v) {
+	return _elm_lang$core$Basics$sqrt((v.x * v.x) + (v.y * v.y));
+};
+var _user$project$NBody$except = F2(
+	function (xs, i) {
 		return A2(
-			_elm_lang$svg$Svg$line,
-			{
+			_elm_lang$core$Basics_ops['++'],
+			A2(_elm_lang$core$List$take, i, xs),
+			A2(_elm_lang$core$List$drop, i + 1, xs));
+	});
+var _user$project$NBody$exceptPair = function (xs) {
+	var excepts = A2(
+		_elm_lang$core$List$map,
+		_user$project$NBody$except(xs),
+		A2(
+			_elm_lang$core$List$range,
+			0,
+			_elm_lang$core$List$length(xs)));
+	return A3(
+		_elm_lang$core$List$map2,
+		F2(
+			function (v0, v1) {
+				return {ctor: '_Tuple2', _0: v0, _1: v1};
+			}),
+		xs,
+		excepts);
+};
+var _user$project$NBody$g = 6.673e-11;
+var _user$project$NBody$Vec2 = F2(
+	function (a, b) {
+		return {x: a, y: b};
+	});
+var _user$project$NBody$zero = A2(_user$project$NBody$Vec2, 0, 0);
+var _user$project$NBody$add = F2(
+	function (v1, v2) {
+		return A2(_user$project$NBody$Vec2, v1.x + v2.x, v1.y + v2.y);
+	});
+var _user$project$NBody$sub = F2(
+	function (v1, v2) {
+		return A2(_user$project$NBody$Vec2, v1.x - v2.x, v1.y - v2.y);
+	});
+var _user$project$NBody$scale = F2(
+	function (f, v) {
+		return A2(_user$project$NBody$Vec2, v.x * f, v.y * f);
+	});
+var _user$project$NBody$normalize = function (v) {
+	return A2(
+		_user$project$NBody$scale,
+		1.0 / _user$project$NBody$length(v),
+		v);
+};
+var _user$project$NBody$force = F2(
+	function (b1, b2) {
+		var mm = b1.mass * b2.mass;
+		var dpos = A2(_user$project$NBody$sub, b2.position, b1.position);
+		var r = 1.0e-30 + _user$project$NBody$length(dpos);
+		var f = (_user$project$NBody$g * mm) / (r * r);
+		return A2(
+			_user$project$NBody$scale,
+			f,
+			_user$project$NBody$normalize(dpos));
+	});
+var _user$project$NBody$forces = F2(
+	function (b, bodies) {
+		var _p0 = bodies;
+		if (_p0.ctor === '::') {
+			return A2(
+				_user$project$NBody$add,
+				A2(_user$project$NBody$force, b, _p0._0),
+				A2(_user$project$NBody$forces, b, _p0._1));
+		} else {
+			return _user$project$NBody$zero;
+		}
+	});
+var _user$project$NBody$step = F3(
+	function (dt, bodies, body) {
+		var force = A2(_user$project$NBody$forces, body, bodies);
+		var newVelocity = A2(
+			_user$project$NBody$add,
+			body.velocity,
+			A2(_user$project$NBody$scale, dt / body.mass, force));
+		var newPosition = A2(
+			_user$project$NBody$add,
+			body.position,
+			A2(_user$project$NBody$scale, dt, newVelocity));
+		return _elm_lang$core$Native_Utils.update(
+			body,
+			{position: newPosition, velocity: newVelocity});
+	});
+var _user$project$NBody$updateBodies = F2(
+	function (dt, bodies) {
+		var pairStep = function (_p1) {
+			var _p2 = _p1;
+			return A3(_user$project$NBody$step, dt, _p2._1, _p2._0);
+		};
+		var pairs = _user$project$NBody$exceptPair(bodies);
+		return A2(_elm_lang$core$List$map, pairStep, pairs);
+	});
+var _user$project$NBody$updateBodiesIter = F3(
+	function (dt, iter, bodies) {
+		updateBodiesIter:
+		while (true) {
+			if (_elm_lang$core$Native_Utils.eq(iter, 0)) {
+				return bodies;
+			} else {
+				var _v2 = dt,
+					_v3 = iter - 1,
+					_v4 = A2(_user$project$NBody$updateBodies, dt, bodies);
+				dt = _v2;
+				iter = _v3;
+				bodies = _v4;
+				continue updateBodiesIter;
+			}
+		}
+	});
+var _user$project$NBody$update = F2(
+	function (msg, model) {
+		var _p3 = msg;
+		return {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Native_Utils.update(
+				model,
+				{
+					bodies: A3(_user$project$NBody$updateBodiesIter, (_p3._0 * 1.0e-3) / _user$project$NBody$iter, _user$project$NBody$iter, model.bodies)
+				}),
+			_1: _elm_lang$core$Platform_Cmd$none
+		};
+	});
+var _user$project$NBody$viewBody = function (b) {
+	var pos = A2(
+		_user$project$NBody$add,
+		A2(_user$project$NBody$scale, 0.5, b.position),
+		A2(_user$project$NBody$Vec2, 300, 300));
+	return A2(
+		_elm_lang$svg$Svg$circle,
+		{
+			ctor: '::',
+			_0: _elm_lang$svg$Svg_Attributes$cx(
+				_elm_lang$core$Basics$toString(pos.x)),
+			_1: {
 				ctor: '::',
-				_0: _elm_lang$svg$Svg_Attributes$x1(
-					_elm_lang$core$Basics$toString(lx1)),
+				_0: _elm_lang$svg$Svg_Attributes$cy(
+					_elm_lang$core$Basics$toString(pos.y)),
 				_1: {
 					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$y1(
-						_elm_lang$core$Basics$toString(ly1)),
+					_0: _elm_lang$svg$Svg_Attributes$r(
+						_elm_lang$core$Basics$toString(b.radius)),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$x2(
-							_elm_lang$core$Basics$toString(lx2)),
+						_0: _elm_lang$svg$Svg_Attributes$stroke('none'),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$y2(
-								_elm_lang$core$Basics$toString(ly2)),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$stroke('#000000'),
-								_1: {ctor: '[]'}
-							}
+							_0: _elm_lang$svg$Svg_Attributes$fill('#000'),
+							_1: {ctor: '[]'}
 						}
 					}
 				}
-			},
-			{ctor: '[]'});
-	});
-var _user$project$Main$barColor = F2(
-	function (i, t) {
-		return _elm_lang$core$Color$black;
-	});
-var _user$project$Main$inMySeconds = function (t) {
-	return _elm_lang$core$Time$inSeconds(t) * 80.0;
-};
-var _user$project$Main$barLength = F2(
-	function (i, t) {
-		return (_elm_lang$core$Basics$sin(
-			(_elm_lang$core$Basics$toFloat(i) * 5.0e-3) * _user$project$Main$inMySeconds(t)) * 150) + 100;
-	});
-var _user$project$Main$barNum = 150;
-var _user$project$Main$barAngle = F2(
-	function (i, t) {
-		return (2 * _elm_lang$core$Basics$pi) * ((5.0e-3 * _user$project$Main$inMySeconds(t)) - (_elm_lang$core$Basics$toFloat(i) / _elm_lang$core$Basics$toFloat(_user$project$Main$barNum + 1)));
-	});
-var _user$project$Main$lines = function (t) {
-	return A2(
-		_elm_lang$core$List$map,
-		function (i) {
-			return A3(
-				_user$project$Main$aLine,
-				{
-					ctor: '_Tuple2',
-					_0: A2(_user$project$Main$barLength, i + 3, t),
-					_1: A2(_user$project$Main$barAngle, i + 3, t)
-				},
-				{
-					ctor: '_Tuple2',
-					_0: A2(_user$project$Main$barLength, i, t),
-					_1: A2(_user$project$Main$barAngle, i, t)
-				},
-				A2(_user$project$Main$barColor, i, t));
+			}
 		},
-		A2(_elm_lang$core$List$range, 0, _user$project$Main$barNum));
+		{ctor: '[]'});
 };
-var _user$project$Main$view = function (model) {
+var _user$project$NBody$view = function (model) {
 	return A2(
 		_elm_lang$svg$Svg$svg,
 		{
 			ctor: '::',
-			_0: _elm_lang$svg$Svg_Attributes$viewBox('0 0 750 750'),
+			_0: _elm_lang$svg$Svg_Attributes$viewBox('0 0 600 600'),
 			_1: {
 				ctor: '::',
-				_0: _elm_lang$svg$Svg_Attributes$width('750px'),
+				_0: _elm_lang$svg$Svg_Attributes$width('600px'),
 				_1: {ctor: '[]'}
 			}
 		},
+		A2(_elm_lang$core$List$map, _user$project$NBody$viewBody, model.bodies));
+};
+var _user$project$NBody$Body = F4(
+	function (a, b, c, d) {
+		return {position: a, velocity: b, mass: c, radius: d};
+	});
+var _user$project$NBody$sun = A4(_user$project$NBody$Body, _user$project$NBody$zero, _user$project$NBody$zero, 1.0e17, 2);
+var _user$project$NBody$randomBody = function (s) {
+	var vf = 1.0;
+	var _p4 = A2(
+		_elm_lang$core$Random$step,
+		A2(_elm_lang$core$Random$float, 0, 150),
+		s);
+	var d = _p4._0;
+	var s2 = _p4._1;
+	var _p5 = A2(
+		_elm_lang$core$Random$step,
+		A2(_elm_lang$core$Random$float, 0, 2 * _elm_lang$core$Basics$pi),
+		s2);
+	var a = _p5._0;
+	var s3 = _p5._1;
+	var _p6 = A2(
+		_elm_lang$core$Random$step,
+		A2(_elm_lang$core$Random$float, 100, 1000),
+		s3);
+	var mass = _p6._0;
+	var s4 = _p6._1;
+	var va = a + (0.5 * _elm_lang$core$Basics$pi);
+	return {
+		ctor: '_Tuple2',
+		_0: A4(
+			_user$project$NBody$Body,
+			A2(
+				_user$project$NBody$Vec2,
+				_elm_lang$core$Basics$cos(a) * d,
+				_elm_lang$core$Basics$sin(a) * d),
+			A2(
+				_user$project$NBody$Vec2,
+				(_elm_lang$core$Basics$cos(va) * d) * vf,
+				(_elm_lang$core$Basics$sin(va) * d) * vf),
+			mass,
+			1),
+		_1: s4
+	};
+};
+var _user$project$NBody$randomBodies = F2(
+	function (n, s) {
+		if (_elm_lang$core$Native_Utils.eq(n, 0)) {
+			return {ctor: '[]'};
+		} else {
+			var _p7 = _user$project$NBody$randomBody(s);
+			var b = _p7._0;
+			var s2 = _p7._1;
+			return {
+				ctor: '::',
+				_0: b,
+				_1: A2(_user$project$NBody$randomBodies, n - 1, s2)
+			};
+		}
+	});
+var _user$project$NBody$Model = function (a) {
+	return {bodies: a};
+};
+var _user$project$NBody$init = {
+	ctor: '_Tuple2',
+	_0: _user$project$NBody$Model(
 		{
 			ctor: '::',
-			_0: A2(
-				_elm_lang$svg$Svg$g,
-				{
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$transform('translate(325,325)'),
-					_1: {ctor: '[]'}
-				},
-				_user$project$Main$lines(model)),
-			_1: {ctor: '[]'}
-		});
+			_0: _user$project$NBody$sun,
+			_1: A2(
+				_user$project$NBody$randomBodies,
+				100,
+				_elm_lang$core$Random$initialSeed(1))
+		}),
+	_1: _elm_lang$core$Platform_Cmd$none
 };
-var _user$project$Main$update = F2(
-	function (msg, model) {
-		var _p6 = msg;
-		return {ctor: '_Tuple2', _0: _p6._0, _1: _elm_lang$core$Platform_Cmd$none};
-	});
-var _user$project$Main$init = {ctor: '_Tuple2', _0: 0, _1: _elm_lang$core$Platform_Cmd$none};
-var _user$project$Main$Tick = function (a) {
+var _user$project$NBody$Tick = function (a) {
 	return {ctor: 'Tick', _0: a};
 };
-var _user$project$Main$subscriptions = function (model) {
-	return A2(_elm_lang$core$Time$every, _elm_lang$core$Time$millisecond * 16, _user$project$Main$Tick);
+var _user$project$NBody$subscriptions = function (model) {
+	return _elm_lang$animation_frame$AnimationFrame$diffs(_user$project$NBody$Tick);
 };
-var _user$project$Main$main = _elm_lang$html$Html$program(
-	{init: _user$project$Main$init, view: _user$project$Main$view, update: _user$project$Main$update, subscriptions: _user$project$Main$subscriptions})();
+var _user$project$NBody$main = _elm_lang$html$Html$program(
+	{init: _user$project$NBody$init, view: _user$project$NBody$view, update: _user$project$NBody$update, subscriptions: _user$project$NBody$subscriptions})();
 var Elm = {};
-Elm['Main'] = Elm['Main'] || {};
-if (typeof _user$project$Main$main !== 'undefined') {
-    _user$project$Main$main(Elm['Main'], 'Main', undefined);
+Elm['NBody'] = Elm['NBody'] || {};
+if (typeof _user$project$NBody$main !== 'undefined') {
+    _user$project$NBody$main(Elm['NBody'], 'NBody', undefined);
 }
 
 if (typeof define === "function" && define['amd'])
@@ -8833,4 +9353,4 @@ for (var publicModule in Elm)
 }
 
 }).call(this);
-</script></head><body><script type="text/javascript">Elm.Main.fullscreen()</script></body></html>
+</script></head><body><script type="text/javascript">Elm.NBody.fullscreen()</script></body></html>
