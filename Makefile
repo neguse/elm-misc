@@ -1,5 +1,5 @@
 .PHONY: all clean push
-SRCS = Popopo.elm SuperRollingBar.elm PokeDrill.elm
+SRCS = Popopo.elm SuperRollingBar.elm PokeDrill.elm NBody.elm
 DSTS = $(SRCS:%.elm=%.html)
 all: $(DSTS)
 
